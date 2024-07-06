@@ -38,7 +38,7 @@ class PostOut(BaseModel):
 
     class Config:
         from_attributes = True
-        allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class UserCreate(BaseModel):

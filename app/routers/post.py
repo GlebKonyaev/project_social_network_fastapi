@@ -9,8 +9,8 @@ from sqlalchemy import func
 
 models.Base.metadata.create_all(bind=engine)
 rout = APIRouter(prefix="/posts", tags=["Posts"])
-conn = connection()
-cur = conn.cursor()
+# conn = connection()
+# cur = conn.cursor()
 
 
 @rout.get("/", response_model=List[schemas.PostOut])

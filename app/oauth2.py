@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import schemas, database, models
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from config import settings
+from app.config import settings
 
 o2auth_schemas = OAuth2PasswordBearer(tokenUrl="login")
 SECRET_KEY = f"{settings.secret_key}"

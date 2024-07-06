@@ -8,8 +8,8 @@ from dbconnection import connection
 
 models.Base.metadata.create_all(bind=engine)
 rout = APIRouter(prefix="/vote", tags=["Vote"])
-conn = connection()
-cur = conn.cursor()
+# conn = connection()
+# cur = conn.cursor()
 
 
 @rout.post("/", status_code=status.HTTP_201_CREATED)

@@ -1,7 +1,11 @@
 import psycopg
 from psycopg.rows import dict_row
 import time
-from config import settings
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from app.config import settings
 
 
 def connection():
@@ -18,5 +22,5 @@ def connection():
             return conn
         except Exception as e:
             print(f"ошибка {e}")
-            time.slepp(2)
+            time.sleep(2)
             break
