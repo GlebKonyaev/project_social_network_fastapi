@@ -1,10 +1,11 @@
 from fastapi import Depends, status, HTTPException
 import jwt
 from datetime import datetime, timedelta
-import schemas, database, models
+import schemas, database
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.config import settings
+from app.models import UserDB, PostDB, Votes
 
 o2auth_schemas = OAuth2PasswordBearer(tokenUrl="login")
 SECRET_KEY = f"{settings.secret_key}"
@@ -41,5 +42,5 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     token = verify_access_token(token, credentials_exception)
-    user = db.query(models.User).filter(models.User.id == int(token.id)).first()
+    user = db.query(UserDB).filter(UserDB.id == int(token.id)).first()
     return user

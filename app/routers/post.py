@@ -1,13 +1,15 @@
 from typing import List, Optional
 from fastapi import Depends, HTTPException, Response, status, FastAPI, APIRouter
-from app import models, schemas
-from app.database import get_db, engine
+from app import schemas
+from app.database import get_db
 from sqlalchemy.orm import Session
 from app import oauth2
-from dbconnection import connection
 from sqlalchemy import func
+from app.database import get_db
+from app.models import PostDB, Votes
 
-models.Base.metadata.create_all(bind=engine)
+
+# models.Base.metadata.create_all(bind=engine)
 rout = APIRouter(prefix="/posts", tags=["Posts"])
 # conn = connection()
 # cur = conn.cursor()
@@ -20,18 +22,28 @@ def get_posts(
     skip: int = 0,
     search: Optional[str] = "",
 ):
+
     posts = (
-        db.query(models.Post, func.count(models.Votes.post_id).label("votes"))
-        .join(models.Votes, models.Votes.post_id == models.Post.id, isouter=True)
-        .group_by(models.Post.id)
-        .filter(models.Post.title.contains(search))
+        db.query(PostDB, func.count(Votes.post_id).label("votes"))
+        .join(Votes, Votes.post_id == PostDB.id, isouter=True)
+        .group_by(PostDB.id)
+        .filter(PostDB.title.contains(search))
         .limit(limit)
         .offset(skip)
         .all()
     )
-    response = [schemas.PostOut(post=post, votes=votes) for post, votes in posts]
+
+    response = []
+    for post, votes in posts:
+        post_data = post.__dict__.copy()
+        post_data["votes"] = votes
+        post_data["owner"] = post.owner
+        response.append(schemas.PostOut(post=schemas.Post(**post_data), votes=votes))
 
     return response
+
+
+# Прокидываем ошибку дальше для обработки FastAPI
 
 
 @rout.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
@@ -40,7 +52,7 @@ def create_posts(
     db: Session = Depends(get_db),
     current_user: int = Depends(oauth2.get_current_user),
 ):
-    new_post = models.Post(**post.dict(), owner_id=current_user.id)
+    new_post = PostDB(**post.dict(), owner_id=current_user.id)
     print(current_user.email, current_user.id)
     db.add(new_post)
     db.commit()
@@ -51,10 +63,10 @@ def create_posts(
 @rout.get("/{id}", response_model=schemas.PostOut)
 def get_post(id: int, db: Session = Depends(get_db)):
     psot = (
-        db.query(models.Post, func.count(models.Votes.post_id).label("votes"))
-        .join(models.Votes, models.Votes.post_id == models.Post.id, isouter=True)
-        .group_by(models.Post.id)
-        .filter(models.Post.id == id)
+        db.query(PostDB, func.count(Votes.post_id).label("votes"))
+        .join(Votes, Votes.post_id == PostDB.id, isouter=True)
+        .group_by(PostDB.id)
+        .filter(PostDB.id == id)
         .first()
     )
     if psot is None:
@@ -73,7 +85,7 @@ def delete_post(
     db: Session = Depends(get_db),
     current_user: int = Depends(oauth2.get_current_user),
 ):
-    deleted_post = db.query(models.Post).filter(models.Post.id == id)
+    deleted_post = db.query(PostDB).filter(PostDB.id == id)
     if deleted_post.first() is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -96,7 +108,7 @@ def update_post(
     db: Session = Depends(get_db),
     current_user: int = Depends(oauth2.get_current_user),
 ):
-    updated_post = db.query(models.Post).filter(models.Post.id == id)
+    updated_post = db.query(PostDB).filter(PostDB.id == id)
     check = updated_post.first()
     if check is None:
         raise HTTPException(

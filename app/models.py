@@ -1,9 +1,12 @@
 from app.database import Base
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
-class User(Base):
+class UserDB(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, nullable=False)
     email = Column(String, nullable=False, unique=True)
@@ -11,10 +14,13 @@ class User(Base):
     created_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
+    posts = relationship(
+        "app.models.PostDB", back_populates="owner", cascade="all, delete-orphan"
+    )
     __table_args__ = {"extend_existing": True}
 
 
-class Post(Base):
+class PostDB(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, nullable=False)
     owner_id = Column(
@@ -26,7 +32,8 @@ class Post(Base):
     created_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
-    owner = relationship("app.models.User", overlaps="owner")
+
+    owner = relationship("app.models.UserDB", back_populates="posts")
     __table_args__ = {"extend_existing": True}
 
 
