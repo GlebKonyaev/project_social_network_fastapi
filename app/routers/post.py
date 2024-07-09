@@ -18,7 +18,7 @@ rout = APIRouter(prefix="/posts", tags=["Posts"])
 @rout.get("/", response_model=List[schemas.PostOut])
 def get_posts(
     db: Session = Depends(get_db),
-    limit: int = 10,
+    limit: int = 600,
     skip: int = 0,
     search: Optional[str] = "",
 ):
